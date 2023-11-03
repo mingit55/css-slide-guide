@@ -36,7 +36,7 @@
 
 .slide {
   position: absolute;
-  left: 0;
+  left: -100%;
   top: 0;
   width: 100%;
   height: 100%;
@@ -195,3 +195,510 @@ example1 은 개체가 오른쪽으로 이동, example2는 왼쪽으로 이동�
 - 정방향 슬라이드와 역방향 슬라이드를 구분지어 애니메이션을 설정해야한다.
 - 역방향 슬라이드의 경우 애니메이션을 두 가지 사용하여 역방향으로 이동할 수 있게 설정해야한다.
 - 애니메이션이 중복되지 않도록, slide / radio 의 복사본을 만들어 동일한 역할을 수행하도록 해야 한다.
+
+그럼 먼저 정방향/역방향 슬라이드를 구분지어 애니메이션을 설정할 수 있도록 radio 태그를 수정해 보자.
+
+```html
+<!-- 삭제 -->
+<!-- <input type="radio" name="s" id="s1" hidden> -->
+<!-- <input type="radio" name="s" id="s2" hidden> -->
+<!-- <input type="radio" name="s" id="s3" hidden> -->
+
+<input type="radio" name="s" id="move-2-1" checked>
+<input type="radio" name="s" id="move-3-1">
+<input type="radio" name="s" id="move-1-2">
+<input type="radio" name="s" id="move-3-2">
+<input type="radio" name="s" id="move-1-3">
+<input type="radio" name="s" id="move-2-3">
+```
+
+슬라이드 이미지가 총 3장이기 때문에, 정방향 3개(1-2, 2-3, 3-1), 역방향 3개(1-3, 2-1, 3-2) 총 6개의 radio 가 필요하다. 이렇게 radio 를 모두 생성하였다면, 정방향과 역방향을 구분지을 수 있게 되어, 문제점 1을 해결할 수 있게 된다.
+이제 문제점 2를 해결하기 위해 slide 를 1~3으로 구분지어 보자.
+
+```css
+
+/* slide-1 은 위에 있는 @keyframes slide를 그대로 사용한 것이다.  */
+@keyframes slide-1 {
+  /* 0s 3 */
+  0% { left: -100%; }
+  /* 0.5s 1 */
+  4.7619% { left: 0; }
+  /* 3.5s 1 */
+  33.333% { left: 0; }
+  /* 4s 2 */
+  38.095% { left: 100%; }
+  /* 7s 2 */
+  66.666% { left: 100%; }
+  /* 7.5s 3 */
+  71.428% { left: 100%; }
+  /* 10.5s 3 */
+  100% { left: 100%; }
+}
+@keyframes slide-2 {
+  /* 0s 2 */
+  0% { left: -100%; }
+  /* 0.5s 3 */
+  4.7619% { left: -100%; }
+  /* 3.5s 3 */
+  33.333% { left: -100%; }
+  /* 4s 1 */
+  38.095% { left: 0%; }
+  /* 7s 1 */
+  66.666% { left: 0%; }
+  /* 7.5s 2 */
+  71.428% { left: 100%; }
+  /* 10.5s 2 */
+  100% { left: 100%; }
+}
+@keyframes slide-3 {
+  /* 0s 1 */
+  0% { left: 0%; }
+  /* 0.5s 2 */
+  4.7619% { left: 100%; }
+  /* 3.5s 2 */
+  33.333% { left: 100%; }
+  33.333333% { left: -100%; }
+  /* 4s 3 */
+  38.095% { left: -100%; }
+  /* 7s 3 */
+  66.666% { left: -100%; }
+  /* 7.5s 1 */
+  71.428% { left: 0%; }
+  /* 10.5s 1 */
+  100% { left: 0%; }
+}
+```
+
+slide-3의 경우 left가 100% 에서 -100%로 단숨에 이동시키기 위해 특별히 100% ~ -100% 로 이동하는 그 순간을 퍼센티지로 짧게 추가 설정해서 사용자가 보는 영역에 왼쪽으로 이동하는 과정이 보여지지 않도록 하였다.
+이렇게 3종류의 @keyframes 까지 모두 완성하였다면, 각 radio와 연결되는 CSS 를 만들어주어야 한다. CSS 에서는 radio 가 활성화될 때, :checked 선택자를 통해 알 수 있다. 이를 이용해서 :checked 가 되었을 때 형제 선택자를 이용해서 각 slide 에 적절한 애니메이션이 들어가도록 수정해 준다.
+
+```css
+#move-1-2:checked ~ .slide-wrap .slide-1 { animation-name: slide-3; }
+#move-1-2:checked ~ .slide-wrap .slide-2 { animation-name: slide-1; }
+#move-1-2:checked ~ .slide-wrap .slide-3 { animation-name: slide-2; }
+
+#move-2-3:checked ~ .slide-wrap .slide-1 { animation-name: slide-2; }
+#move-2-3:checked ~ .slide-wrap .slide-2 { animation-name: slide-3; }
+#move-2-3:checked ~ .slide-wrap .slide-3 { animation-name: slide-1; }
+
+#move-3-1:checked ~ .slide-wrap .slide-1 { animation-name: slide-1; }
+#move-3-1:checked ~ .slide-wrap .slide-2 { animation-name: slide-2; }
+#move-3-1:checked ~ .slide-wrap .slide-3 { animation-name: slide-3; }
+```
+
+예를 들어 move-1-2의 경우 슬라이드가 1에서 2로 이동하는 애니메이션이다. 따라서 결과적으로 2가 보여지면서 2번째부터 슬라이드가 시작되기 때문에, 2번째 슬라이드가 @keyframes slide-1 부터 부여된다.
+
+마찬가지로 move-2-3의 경우는 2에서 3으로 이동하는 애니메이션이고, 3번째 슬라이드부터 시작하기 때문에 3번재 슬라이드가 @keyframes slide-1 부터 시작하는 것이다.
+
+위 내용은 정방향 슬라이드(1-2, 2-3, 3-1)을 생성한 것이다. 이제부턴 역방향 슬라이드를 만들어야 한다. 역방향 슬라이드(1-3, 2-1, 3-2)는 위에서 한번 언급했듯이, 슬라이드 애니메이션이 2개가 필요하다.
+
+1. 역방향으로 한번 움직이는 동작
+2. 이후 정방향으로 다시 움직이는 동작
+
+2번 정방향 동작은 위에서 이미 만들었으니, 1번 역방향으로 한번 움직이는 동작을 @keyframes 로 만들어 보자.
+
+```css
+/*
+해당 예제는 정방향 @keyframes 가 한번 움직인 뒤 시작하기 때문에,
+이에 맞춰 한번 움직인 후(0.5s) 정지하는 움직임(3s) 으로 역방향 애니메이션을 제작한다.
+
+총 애니메이션의 길이: 3.5s
+움직이는 동작: 0.5s
+기다리는 동작: 3s
+*/
+@keyframes be-hide {
+  /* 0s */
+  0% { left: 0; }
+  /* 0.5s */
+  14.2857% { left: -100%; }
+  /* 3.5s */
+  100% { left: -100%; }
+}
+@keyframes be-show {
+  /* 0s */
+  0% { left: 100%; }
+  /* 0.5s */
+  14.2857% { left: 0; }
+  /* 3.5s */
+  100% { left: 0; }
+}
+```
+
+이렇게 역방향 이동 애니메이션을 만들었다면, 이어서 역방향도 정방향과 동일한 방식으로 만들어 준다.
+
+```css
+
+#move-2-1:checked ~ .slide-wrap .slide-1 { animation-name: be-show, slide-3; }
+#move-2-1:checked ~ .slide-wrap .slide-2 { animation-name: be-hide, slide-1; }
+#move-2-1:checked ~ .slide-wrap .slide-3 { animation-name: slide-2; }
+
+#move-3-2:checked ~ .slide-wrap .slide-1 { animation-name: slide-2; }
+#move-3-2:checked ~ .slide-wrap .slide-2 { animation-name: be-show, slide-3; }
+#move-3-2:checked ~ .slide-wrap .slide-3 { animation-name: be-hide, slide-1; }
+
+#move-1-3:checked ~ .slide-wrap .slide-1 { animation-name: be-hide, slide-1; }
+#move-1-3:checked ~ .slide-wrap .slide-2 { animation-name: slide-2; }
+#move-1-3:checked ~ .slide-wrap .slide-3 { animation-name: be-show, slide-3; }
+
+#move-2-1:checked ~ .slide-wrap .slide-1,
+#move-2-1:checked ~ .slide-wrap .slide-2,
+#move-3-2:checked ~ .slide-wrap .slide-2,
+#move-3-2:checked ~ .slide-wrap .slide-3,
+#move-1-3:checked ~ .slide-wrap .slide-1,
+#move-1-3:checked ~ .slide-wrap .slide-3 {
+  animation-duration: 3.5s, 10.5s;
+  animation-delay: 0s, 3.5s;
+  animation-iteration-count: 1, infinite;
+}
+
+#move-2-1:checked ~ .slide-wrap .slide-3,
+#move-3-2:checked ~ .slide-wrap .slide-1,
+#move-1-3:checked ~ .slide-wrap .slide-2 {
+  animation-delay: 3.5s;
+}
+
+```
+
+예를 들어 move-2-1의 경우 2가 사라지고 1이 나타나는 것이기 때문에 2에 be-hide, 1에 be-show 가 적용된다. 이후, 그 다음 슬라이드로 이동해야 하므로 2가 slide-1, 3이 slide-2, 1이 slide-3 이 되어 적용된다. 애니메이션이 2가지 적용되는 slide 의 경우 duration, delay, iteration-count 를 각각 적용해줄 필요가 있는데 be-show, be-hide 의 경우 움직였다가(0.5s) 멈추는(3s) 동작 합해서 3.5s의 duration 을 지니고, slide-n 의 경우 정방향과 동일하게 10.5s 로 설정하되, delay 를 be-show/hide 시간만큼 기다려줄 수 있도록 3.5s 로 설정한다.
+나머지 애니메이션이 하나만 포함되는 슬라이드의 경우 다른 슬라이드의 be-show/hide 시간을 기다려주기 위해, 3.5s 의 delay를 설정한다.
+
+여기까지 완성하였다면, 각 radio 를 클릭했을 때 해당 방향으로 이동하는 것까지 완성되었을 것이다. radio 를 클릭해서 move-1-2 라면 첫번째 슬라이드에서 두번째로 이동하는지 확인해 보자.
+
+그 다음은 각 control 을 클릭하였을 때 올바른 방향으로 이동시킬 수 있도록 label을 삽입해야 한다. label-1 은 첫번째 슬라이드가 화면에 보이는 경우, label-2는 두번째 슬라이드, label-3은 세번째 슬라이드가 화면에 보이는 경우 활성화 시킬 것이다.
+
+```html
+<div class="control-wrap">
+    <div class="control">
+      <label for="move-2-1" class="label label-2"></label>
+      <label for="move-3-1" class="label label-3"></label>
+    </div>
+    <div class="control">
+      <label for="move-1-2" class="label label-1"></label>
+      <label for="move-3-2" class="label label-3"></label>
+    </div>
+    <div class="control">
+      <label for="move-1-3" class="label label-1"></label>
+      <label for="move-2-3" class="label label-2"></label>
+    </div>
+  </div>
+```
+
+move-2-1 은 2에서 1로 이동하기 때문에, 2번째 슬라이드가 화면에 보여지게 되었을 때 첫번째 control 에서 활성화 되어야 한다. 따라서 label-2 클래스로, 첫번째 control 에 삽입된다. 동일한 방법으로 나머지 label들을 적절하게 삽입하여 주면, label 쪽 HTML은 완성된다. 이어서 CSS 로 각 label 들이 슬라이드가 움직일 때마다 적절하게 활성화될 수 있도록, z-index 를 사용한 @keyframes 를 만들어 준다. 해당 @keyframes 의 시간은 슬라이드와 동일하므로, 똑같이 복사해서 z-index 로 바꿔주기만 하면 된다.
+
+```css
+@keyframes label-1 {
+  /* 0s 3 */
+  0% { z-index: -1; }
+  /* 0.5s 1 */
+  4.7619% { z-index: 1; }
+  /* 3.5s 1 */
+  33.333% { z-index: 1; }
+  /* 4s 2 */
+  38.095% { z-index: -1; }
+  /* 7s 2 */
+  66.666% { z-index: -1; }
+  /* 7.5s 3 */
+  71.428% { z-index: -1; }
+  /* 10.5s 3 */
+  100% { z-index: -1; }
+}
+
+@keyframes label-2 {
+  /* 0s 3 */
+  0% { z-index: -1; }
+  /* 0.5s 1 */
+  4.7619% { z-index: -1; }
+  /* 3.5s 1 */
+  33.333% { z-index: -1; }
+  /* 4s 2 */
+  38.095% { z-index: 1; }
+  /* 7s 2 */
+  66.666% { z-index: 1; }
+  /* 7.5s 3 */
+  71.428% { z-index: -1; }
+  /* 10.5s 3 */
+  100% { z-index: -1; }
+}
+
+@keyframes label-3 {
+  /* 0s 3 */
+  0% { z-index: -1; }
+  /* 0.5s 1 */
+  4.7619% { z-index: -1; }
+  /* 3.5s 1 */
+  33.333% { z-index: -1; }
+  /* 4s 2 */
+  38.095% { z-index: -1; }
+  /* 7s 2 */
+  66.666% { z-index: -1; }
+  /* 7.5s 3 */
+  71.428% { z-index: 1; }
+  /* 10.5s 3 */
+  100% { z-index: 1; }
+}
+```
+
+이렇게 하면 label 에 대한 @keyframes 가 완성되었다. label-1, label-2, label-3 은 각각 slide-1, slide-2, slide-3 과 동일하게 해당 슬라이드에 맞춰 label에 적용시켜주면 정상적으로 작동할 것이다.
+
+```css
+
+.control .label {
+  animation-duration: 10.5s;
+  animation-iteration-count: infinite;
+}
+
+
+#move-2-1:checked ~ .control-wrap .label-1 { animation-name: label-1; }
+#move-2-1:checked ~ .control-wrap .label-2 { animation-name: label-2; }
+#move-2-1:checked ~ .control-wrap .label-3 { animation-name: label-3; }
+#move-3-1:checked ~ .control-wrap .label-1 { animation-name: label-1; }
+#move-3-1:checked ~ .control-wrap .label-2 { animation-name: label-2; }
+#move-3-1:checked ~ .control-wrap .label-3 { animation-name: label-3; }
+
+#move-1-2:checked ~ .control-wrap .label-1 { animation-name: label-3; }
+#move-1-2:checked ~ .control-wrap .label-2 { animation-name: label-1; }
+#move-1-2:checked ~ .control-wrap .label-3 { animation-name: label-2; }
+#move-3-2:checked ~ .control-wrap .label-1 { animation-name: label-3; }
+#move-3-2:checked ~ .control-wrap .label-2 { animation-name: label-1; }
+#move-3-2:checked ~ .control-wrap .label-3 { animation-name: label-2; }
+
+#move-1-3:checked ~ .control-wrap .label-1 { animation-name: label-2; }
+#move-1-3:checked ~ .control-wrap .label-2 { animation-name: label-3; }
+#move-1-3:checked ~ .control-wrap .label-3 { animation-name: label-1; }
+#move-2-3:checked ~ .control-wrap .label-1 { animation-name: label-2; }
+#move-2-3:checked ~ .control-wrap .label-2 { animation-name: label-3; }
+#move-2-3:checked ~ .control-wrap .label-3 { animation-name: label-1; }
+
+```
+
+label 과 slide 의 차이점은 label 의 경우 z-index 가 사용자에게 시각적으로 변화가 보여지지 않기 때문에, 정방향인지 역방향인지를 신경 쓸 필요가 없다는 것이다. 따라서 move-2-1 이던 move-3-1 이던 결국 보여지기 시작하는 건 첫번째 슬라이드이기 때문에, label-1 이 첫번째가 되도록 설정하고, move-1-2이던, move-3-2이던 2부터 시작하기 때문에 label-2가 첫번째가 되도록 설정하면 되는 것이다.
+
+여기까지 진행했다면, 각 버튼을 클릭하였을 때 정상적으로 각 슬라이드로 이동하는 것을 확인할 수 있을 것이다. 다만 아직 문제점 3이 해결되지 않았는데, 두번째 control 을 클릭해서 두번째 슬라이드로 이동한 상태에서 다시 두번째 control 을 클릭하면 동일한 애니메이션으로 변경되는 것이기 때문에 아무런 작동을 하지 않는다는 문제점이 있다.
+
+해당 문제를 해결하기 위하여 각 @keyframes 의 복사본을 제작하고, radio 도 복사본을 만들어, 복사본 radio 가 checked 가 되었다면 복사본 @keyframes 가 지정되도록 수정해주면 된다.
+
+기존 radio 아래에 다음과 같이 copy본을 추가한다.
+
+```html
+<input type="radio" name="s" id="move-2-1-copy">
+<input type="radio" name="s" id="move-3-1-copy">
+<input type="radio" name="s" id="move-1-2-copy">
+<input type="radio" name="s" id="move-3-2-copy">
+<input type="radio" name="s" id="move-1-3-copy">
+<input type="radio" name="s" id="move-2-3-copy">
+```
+
+또한, 기존 label 아래에도 마찬가지로 copy 본을 만들어 연결해준다.
+
+```html
+<div class="control">
+  <label for="move-2-1" class="label label-2"></label>
+  <label for="move-3-1" class="label label-3"></label>
+
+  <!-- 추가된 부분 -->
+  <label for="move-2-1-copy" class="label label-2-copy"></label>
+  <label for="move-3-1-copy" class="label label-3-copy"></label>
+  <!-- //추가된 부분 -->
+</div>
+<div class="control">
+  <label for="move-1-2" class="label label-1"></label>
+  <label for="move-3-2" class="label label-3"></label>
+
+  <!-- 추가된 부분 -->
+  <label for="move-1-2-copy" class="label label-1-copy"></label>
+  <label for="move-3-2-copy" class="label label-3-copy"></label>
+  <!-- //추가된 부분 -->
+</div>
+<div class="control">
+  <label for="move-1-3" class="label label-1"></label>
+  <label for="move-2-3" class="label label-2"></label>
+
+  <!-- 추가된 부분 -->
+  <label for="move-1-3-copy" class="label label-1-copy"></label>
+  <label for="move-2-3-copy" class="label label-2-copy"></label>
+  <!-- //추가된 부분 -->
+</div>
+```
+
+이제 모든 애니메이션 @keyframes를 복사해서, 복사한 radio 가 선택된 경우 각 슬라이드의 @keyframes 의 복사본이 선택되도록 하면 된다.
+
+```css
+@keyframes slide-1-copy {
+  /* 0s 3 */
+  0% { left: -100%; }
+  /* 0.5s 1 */
+  4.7619% { left: 0; }
+  /* 3.5s 1 */
+  33.333% { left: 0; }
+  /* 4s 2 */
+  38.095% { left: 100%; }
+  /* 7s 2 */
+  66.666% { left: 100%; }
+  /* 7.5s 3 */
+  71.428% { left: 100%; }
+  /* 10.5s 3 */
+  100% { left: 100%; }
+}
+
+@keyframes slide-2-copy {
+  /* 0s 3 */
+  0% { left: -100%; }
+  /* 0.5s 1 */
+  4.7619% { left: -100%; }
+  /* 3.5s 1 */
+  33.333% { left: -100%; }
+  /* 4s 2 */
+  38.095% { left: 0%; }
+  /* 7s 2 */
+  66.666% { left: 0%; }
+  /* 7.5s 3 */
+  71.428% { left: 100%; }
+  /* 10.5s 3 */
+  100% { left: 100%; }
+}
+
+@keyframes slide-3-copy {
+  /* 0s 3 */
+  0% { left: 0%; }
+  /* 0.5s 1 */
+  4.7619% { left: 100%; }
+  /* 3.5s 1 */
+  33.333% { left: 100%; }
+  33.333333% { left: -100%; }
+  /* 4s 2 */
+  38.095% { left: -100%; }
+  /* 7s 2 */
+  66.666% { left: -100%; }
+  /* 7.5s 3 */
+  71.428% { left: 0%; }
+  /* 10.5s 3 */
+  100% { left: 0%; }
+}
+
+#move-1-2-copy:checked ~ .slide-wrap .slide-1 { animation-name: slide-3-copy; }
+#move-1-2-copy:checked ~ .slide-wrap .slide-2 { animation-name: slide-1-copy; }
+#move-1-2-copy:checked ~ .slide-wrap .slide-3 { animation-name: slide-2-copy; }
+
+#move-2-3-copy:checked ~ .slide-wrap .slide-1 { animation-name: slide-2-copy; }
+#move-2-3-copy:checked ~ .slide-wrap .slide-2 { animation-name: slide-3-copy; }
+#move-2-3-copy:checked ~ .slide-wrap .slide-3 { animation-name: slide-1-copy; }
+
+#move-3-1-copy:checked ~ .slide-wrap .slide-1 { animation-name: slide-1-copy; }
+#move-3-1-copy:checked ~ .slide-wrap .slide-2 { animation-name: slide-2-copy; }
+#move-3-1-copy:checked ~ .slide-wrap .slide-3 { animation-name: slide-3-copy; }
+
+@keyframes be-hide-copy {
+  0% { left: 0; }
+  14.2857% { left: -100%; }
+  100% { left: -100%; }
+}
+@keyframes be-show-copy {
+  0% { left: 100%; }
+  14.2857% { left: 0; }
+  100% { left: 0; }
+}
+
+#move-2-1-copy:checked ~ .slide-wrap .slide-1 { animation-name: be-show-copy, slide-3-copy; }
+#move-2-1-copy:checked ~ .slide-wrap .slide-2 { animation-name: be-hide-copy, slide-1-copy; }
+#move-2-1-copy:checked ~ .slide-wrap .slide-3 { animation-name: slide-2-copy; }
+
+#move-3-2-copy:checked ~ .slide-wrap .slide-1 { animation-name: slide-2-copy; }
+#move-3-2-copy:checked ~ .slide-wrap .slide-2 { animation-name: be-show-copy, slide-3-copy; }
+#move-3-2-copy:checked ~ .slide-wrap .slide-3 { animation-name: be-hide-copy, slide-1-copy; }
+
+#move-1-3-copy:checked ~ .slide-wrap .slide-1 { animation-name: be-hide-copy, slide-1-copy; }
+#move-1-3-copy:checked ~ .slide-wrap .slide-2 { animation-name: slide-2-copy; }
+#move-1-3-copy:checked ~ .slide-wrap .slide-3 { animation-name: be-show-copy, slide-3-copy; }
+
+#move-2-1-copy:checked ~ .slide-wrap .slide-1,
+#move-2-1-copy:checked ~ .slide-wrap .slide-2,
+#move-3-2-copy:checked ~ .slide-wrap .slide-2,
+#move-3-2-copy:checked ~ .slide-wrap .slide-3,
+#move-1-3-copy:checked ~ .slide-wrap .slide-1,
+#move-1-3-copy:checked ~ .slide-wrap .slide-3 {
+  animation-duration: 3.5s, 10.5s;
+  animation-delay: 0s, 3.5s;
+  animation-iteration-count: 1, infinite;
+}
+
+#move-2-1-copy:checked ~ .slide-wrap .slide-3,
+#move-3-2-copy:checked ~ .slide-wrap .slide-1,
+#move-1-3-copy:checked ~ .slide-wrap .slide-2 {
+  animation-delay: 3.5s;
+}
+
+```
+
+해당 작업까지 완료되었다면, 이제 각 radio 가 checked 되었을 때 보여질 label 을 컨트롤 할 시간이다. 같은 control 을 클릭했을 때 서로 중복된 애니메이션이 선택되지 않도록, 원본 radio 가 checked 가 되면 복사본을, 복사본 radio 가 checked 되면 원본이 클릭될 수 있게끔 CSS 를 수정한다.
+
+```css
+/* 
+기존에 있던 애니메이션 설정은 삭제한다.
+#move-2-1:checked ~ .control-wrap .label-1 { animation-name: label-1; }
+#move-2-1:checked ~ .control-wrap .label-2 { animation-name: label-2; }
+#move-2-1:checked ~ .control-wrap .label-3 { animation-name: label-3; }
+#move-3-1:checked ~ .control-wrap .label-1 { animation-name: label-1; }
+#move-3-1:checked ~ .control-wrap .label-2 { animation-name: label-2; }
+#move-3-1:checked ~ .control-wrap .label-3 { animation-name: label-3; }
+
+#move-1-2:checked ~ .control-wrap .label-1 { animation-name: label-3; }
+#move-1-2:checked ~ .control-wrap .label-2 { animation-name: label-1; }
+#move-1-2:checked ~ .control-wrap .label-3 { animation-name: label-2; }
+#move-3-2:checked ~ .control-wrap .label-1 { animation-name: label-3; }
+#move-3-2:checked ~ .control-wrap .label-2 { animation-name: label-1; }
+#move-3-2:checked ~ .control-wrap .label-3 { animation-name: label-2; }
+
+#move-1-3:checked ~ .control-wrap .label-1 { animation-name: label-2; }
+#move-1-3:checked ~ .control-wrap .label-2 { animation-name: label-3; }
+#move-1-3:checked ~ .control-wrap .label-3 { animation-name: label-1; }
+#move-2-3:checked ~ .control-wrap .label-1 { animation-name: label-2; }
+#move-2-3:checked ~ .control-wrap .label-2 { animation-name: label-3; }
+#move-2-3:checked ~ .control-wrap .label-3 { animation-name: label-1; } */
+
+
+#move-2-1:checked ~ .control-wrap .label-1-copy { animation-name: label-1; }
+#move-2-1:checked ~ .control-wrap .label-2-copy { animation-name: label-2; }
+#move-2-1:checked ~ .control-wrap .label-3-copy { animation-name: label-3; }
+#move-3-1:checked ~ .control-wrap .label-1-copy { animation-name: label-1; }
+#move-3-1:checked ~ .control-wrap .label-2-copy { animation-name: label-2; }
+#move-3-1:checked ~ .control-wrap .label-3-copy { animation-name: label-3; }
+
+#move-1-2:checked ~ .control-wrap .label-1-copy { animation-name: label-3; }
+#move-1-2:checked ~ .control-wrap .label-2-copy { animation-name: label-1; }
+#move-1-2:checked ~ .control-wrap .label-3-copy { animation-name: label-2; }
+#move-3-2:checked ~ .control-wrap .label-1-copy { animation-name: label-3; }
+#move-3-2:checked ~ .control-wrap .label-2-copy { animation-name: label-1; }
+#move-3-2:checked ~ .control-wrap .label-3-copy { animation-name: label-2; }
+
+#move-1-3:checked ~ .control-wrap .label-1-copy { animation-name: label-2; }
+#move-1-3:checked ~ .control-wrap .label-2-copy { animation-name: label-3; }
+#move-1-3:checked ~ .control-wrap .label-3-copy { animation-name: label-1; }
+#move-2-3:checked ~ .control-wrap .label-1-copy { animation-name: label-2; }
+#move-2-3:checked ~ .control-wrap .label-2-copy { animation-name: label-3; }
+#move-2-3:checked ~ .control-wrap .label-3-copy { animation-name: label-1; }
+
+
+#move-2-1-copy:checked ~ .control-wrap .label-1 { animation-name: label-1; }
+#move-2-1-copy:checked ~ .control-wrap .label-2 { animation-name: label-2; }
+#move-2-1-copy:checked ~ .control-wrap .label-3 { animation-name: label-3; }
+#move-3-1-copy:checked ~ .control-wrap .label-1 { animation-name: label-1; }
+#move-3-1-copy:checked ~ .control-wrap .label-2 { animation-name: label-2; }
+#move-3-1-copy:checked ~ .control-wrap .label-3 { animation-name: label-3; }
+
+#move-1-2-copy:checked ~ .control-wrap .label-1 { animation-name: label-3; }
+#move-1-2-copy:checked ~ .control-wrap .label-2 { animation-name: label-1; }
+#move-1-2-copy:checked ~ .control-wrap .label-3 { animation-name: label-2; }
+#move-3-2-copy:checked ~ .control-wrap .label-1 { animation-name: label-3; }
+#move-3-2-copy:checked ~ .control-wrap .label-2 { animation-name: label-1; }
+#move-3-2-copy:checked ~ .control-wrap .label-3 { animation-name: label-2; }
+
+#move-1-3-copy:checked ~ .control-wrap .label-1 { animation-name: label-2; }
+#move-1-3-copy:checked ~ .control-wrap .label-2 { animation-name: label-3; }
+#move-1-3-copy:checked ~ .control-wrap .label-3 { animation-name: label-1; }
+#move-2-3-copy:checked ~ .control-wrap .label-1 { animation-name: label-2; }
+#move-2-3-copy:checked ~ .control-wrap .label-2 { animation-name: label-3; }
+#move-2-3-copy:checked ~ .control-wrap .label-3 { animation-name: label-1; }
+
+```
+
+여기까지 완료되었다면 슬라이드 구현이 완성되었다.
